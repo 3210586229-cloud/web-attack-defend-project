@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人网盘首页</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='starnight.css') }}">
+    <style>
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        body {
+            color: #e5edf8;
+            background: #0a0a1a;
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: 72px 1fr;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 26px;
+            padding: 0 40px;
+            background: rgba(10, 14, 30, 0.76);
+            border-bottom: 1px solid rgba(100, 180, 255, 0.16);
+            backdrop-filter: blur(18px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 180px;
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .brand-mark {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            color: #ffffff;
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            border-radius: 10px;
+            box-shadow: 0 14px 30px rgba(59, 130, 246, 0.25);
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav a {
+            padding: 9px 14px;
+            color: rgba(229, 237, 248, 0.68);
+            border-radius: 999px;
+            font-size: 15px;
+        }
+
+        .nav a.active,
+        .nav a:hover {
+            color: #ffffff;
+            background: rgba(59, 130, 246, 0.18);
+        }
+
+        .search {
+            flex: 1;
+            max-width: 520px;
+            margin-left: auto;
+            position: relative;
+        }
+
+        .search input {
+            width: 100%;
+            height: 42px;
+            padding: 0 18px 0 42px;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(100, 180, 255, 0.14);
+            border-radius: 999px;
+            outline: none;
+        }
+
+        .search input::placeholder {
+            color: rgba(229, 237, 248, 0.42);
+        }
+
+        .search input:focus {
+            border-color: rgba(96, 165, 250, 0.7);
+            box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.12);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(229, 237, 248, 0.52);
+        }
+
+        .user {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            color: #ffffff;
+            font-weight: 800;
+            background: rgba(59, 130, 246, 0.24);
+            border: 1px solid rgba(147, 197, 253, 0.22);
+            border-radius: 50%;
+        }
+
+        .shell {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 24px;
+            padding: 28px 40px 40px;
+        }
+
+        .sidebar {
+            align-self: start;
+            position: sticky;
+            top: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .upload {
+            height: 48px;
+            border: 0;
+            color: #ffffff;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: 0 18px 34px rgba(37, 99, 235, 0.24);
+        }
+
+        .panel,
+        .hero,
+        .table-card,
+        .media-card {
+            background: rgba(20, 20, 35, 0.82);
+            border: 1px solid rgba(100, 180, 255, 0.14);
+            border-radius: 8px;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(18px);
+        }
+
+        .side-panel {
+            padding: 10px;
+        }
+
+        .side-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            color: rgba(229, 237, 248, 0.68);
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .side-item.active,
+        .side-item:hover {
+            color: #ffffff;
+            background: rgba(59, 130, 246, 0.16);
+        }
+
+        .profile-panel {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 96px;
+            height: 96px;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.88);
+            border-radius: 50%;
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.32);
+        }
+
+        .profile-name {
+            margin-top: 14px;
+            font-size: 20px;
+            color: #ffffff;
+        }
+
+        .profile-meta {
+            margin-top: 6px;
+            color: rgba(229, 237, 248, 0.58);
+            font-size: 14px;
+        }
+
+        .storage-card {
+            padding: 18px;
+        }
+
+        .storage-title {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: rgba(229, 237, 248, 0.58);
+        }
+
+        .storage-size {
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .progress {
+            height: 8px;
+            margin: 16px 0 10px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 999px;
+        }
+
+        .progress span {
+            display: block;
+            width: 42%;
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #22c55e);
+            border-radius: inherit;
+        }
+
+        .storage-note {
+            font-size: 13px;
+            color: rgba(229, 237, 248, 0.58);
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .hero {
+            min-height: 210px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+            gap: 24px;
+            align-items: center;
+            padding: 34px;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 80% 14%, rgba(96, 165, 250, 0.18), transparent 30%),
+                rgba(20, 20, 35, 0.82);
+        }
+
+        .hero h1 {
+            margin-bottom: 12px;
+            font-size: clamp(30px, 4vw, 46px);
+            line-height: 1.12;
+            letter-spacing: 0;
+            color: #ffffff;
+        }
+
+        .hero p {
+            max-width: 640px;
+            color: rgba(229, 237, 248, 0.66);
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .primary,
+        .secondary,
+        .tool {
+            height: 42px;
+            padding: 0 18px;
+            border-radius: 999px;
+            cursor: pointer;
+        }
+
+        .primary {
+            color: #ffffff;
+            background: #2563eb;
+            border: 1px solid #2563eb;
+        }
+
+        .secondary,
+        .tool {
+            color: #bfdbfe;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(147, 197, 253, 0.22);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .stat-card {
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(100, 180, 255, 0.12);
+            border-radius: 8px;
+        }
+
+        .stat-card strong {
+            display: block;
+            margin-bottom: 6px;
+            color: #ffffff;
+            font-size: 18px;
+        }
+
+        .stat-card span {
+            color: rgba(229, 237, 248, 0.6);
+            font-size: 13px;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .section-head h2 {
+            font-size: 22px;
+            color: #ffffff;
+        }
+
+        .tools {
+            display: flex;
+            gap: 10px;
+        }
+
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .media-card {
+            padding: 16px;
+        }
+
+        .gallery-image {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            display: block;
+            border: 1px solid rgba(147, 197, 253, 0.18);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .table-card {
+            overflow: hidden;
+        }
+
+        .file-row {
+            display: grid;
+            grid-template-columns: 1fr 130px 170px 110px;
+            align-items: center;
+            gap: 16px;
+            min-height: 60px;
+            padding: 0 22px;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.08);
+        }
+
+        .file-row.header {
+            min-height: 46px;
+            color: rgba(229, 237, 248, 0.48);
+            font-size: 13px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .file-row:last-child {
+            border-bottom: 0;
+        }
+
+        .file-name {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .file-icon {
+            flex: 0 0 auto;
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            background: rgba(59, 130, 246, 0.16);
+            border-radius: 8px;
+        }
+
+        .muted {
+            color: rgba(229, 237, 248, 0.58);
+            font-size: 14px;
+        }
+
+        @media (max-width: 980px) {
+            .topbar {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 16px 20px;
+            }
+
+            .nav {
+                order: 3;
+                width: 100%;
+                overflow-x: auto;
+            }
+
+            .search {
+                max-width: none;
+            }
+
+            .shell {
+                grid-template-columns: 1fr;
+                padding: 22px 18px 32px;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
+            .hero,
+            .media-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .file-row {
+                grid-template-columns: 1fr 80px;
+            }
+
+            .file-row > :nth-child(3),
+            .file-row > :nth-child(4) {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas class="particle-canvas"></canvas>
+    <div class="page">
+        <header class="topbar">
+            <a class="brand" href="#">
+                <span class="brand-mark">云</span>
+                <span>个人网盘</span>
+            </a>
+            <nav class="nav" aria-label="主导航">
+                <a class="active" href="#">首页</a>
+                <a href="#">文件</a>
+                <a href="#">相册</a>
+                <a href="#">传输</a>
+                <a href="#">分享</a>
+            </nav>
+            <label class="search">
+                <span class="search-icon">⌕</span>
+                <input type="search" placeholder="搜索文件、图片、视频">
+            </label>
+            <div class="user" aria-label="用户">纯</div>
+        </header>
+
+        <main class="shell">
+            <aside class="sidebar">
+                <button class="upload" type="button">上传文件</button>
+                <div class="panel profile-panel">
+                    <img src="{{ url_for('media', name='avatar') }}" alt="个人头像" class="avatar">
+                    <div class="profile-name">野兽先辈</div>
+                    <div class="profile-meta">下北泽电子科技大学 学生</div>
+                </div>
+                <div class="panel side-panel">
+                    <a class="side-item active" href="#">全部文件</a>
+                    <a class="side-item" href="#">图片</a>
+                    <a class="side-item" href="#">视频</a>
+                    <a class="side-item" href="#">文档</a>
+                    <a class="side-item" href="#">收藏</a>
+                    <a class="side-item" href="#">回收站</a>
+                </div>
+                <div class="panel storage-card">
+                    <div class="storage-title">空间使用</div>
+                    <div class="storage-size">42.6 GB</div>
+                    <div class="progress"><span></span></div>
+                    <div class="storage-note">已使用 42%，剩余空间充足</div>
+                </div>
+            </aside>
+
+            <section class="content">
+                <div class="hero">
+                    <div>
+                        <h1>你的个人云盘首页</h1>
+                        <p>集中管理课程资料、图片、视频和个人文件。这里保留了原 profile 页面里的头像与视频内容，并改造成网盘首页布局。</p>
+                        <div class="hero-actions">
+                            <button class="primary" type="button">开始上传</button>
+                            <button class="secondary" type="button">新建文件夹</button>
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <strong>24</strong>
+                            <span>年龄</span>
+                        </div>
+                        <div class="stat-card">
+                            <strong>1919114514</strong>
+                            <span>学号</span>
+                        </div>
+                        <div class="stat-card">
+                            <strong>VibeCoding</strong>
+                            <span>兴趣标签</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-head">
+                    <h2>图片文件</h2>
+                    <div class="tools">
+                        <button class="tool" type="button">排序</button>
+                        <button class="tool" type="button">筛选</button>
+                    </div>
+                </div>
+
+                <div class="media-grid">
+                    <div class="media-card">
+                        <img src="{{ url_for('static', filename='profile-image-1.png') }}" alt="网盘图片 1" class="gallery-image">
+                    </div>
+
+                    <div class="media-card">
+                        <img src="{{ url_for('static', filename='profile-image-2.png') }}" alt="网盘图片 2" class="gallery-image">
+                    </div>
+                </div>
+
+                <div class="section-head">
+                    <h2>最近文件</h2>
+                    <div class="tools">
+                        <button class="tool" type="button">列表</button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="file-row header">
+                        <span>名称</span>
+                        <span>类型</span>
+                        <span>修改时间</span>
+                        <span>大小</span>
+                    </div>
+                    <div class="file-row">
+                        <div class="file-name"><span class="file-icon">📁</span><span>课程资料</span></div>
+                        <span class="muted">文件夹</span>
+                        <span class="muted">今天 16:40</span>
+                        <span class="muted">--</span>
+                    </div>
+                    <div class="file-row">
+                        <div class="file-name"><span class="file-icon">📄</span><span>数据库作业说明.docx</span></div>
+                        <span class="muted">文档</span>
+                        <span class="muted">昨天 21:18</span>
+                        <span class="muted">1.8 MB</span>
+                    </div>
+                    <div class="file-row">
+                        <div class="file-name"><span class="file-icon">🖼</span><span>首页设计参考.png</span></div>
+                        <span class="muted">图片</span>
+                        <span class="muted">5 月 16 日</span>
+                        <span class="muted">3.4 MB</span>
+                    </div>
+                    <div class="file-row">
+                        <div class="file-name"><span class="file-icon">🎬</span><span>项目演示视频.mp4</span></div>
+                        <span class="muted">视频</span>
+                        <span class="muted">5 月 15 日</span>
+                        <span class="muted">128 MB</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='particle.js') }}"></script>
+</body>
+</html>
