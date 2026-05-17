@@ -29,7 +29,7 @@ app=Flask(__name__)
 db_config={
     'host':'localhost',
     'user':'root',
-    'password':'pyk114514',
+    'password':'你的数据库密码',
     'database':'account_id',
     'charset':'utf8mb4'
 }
