@@ -10,7 +10,7 @@ app.secret_key='my-secret-key'##session加密码
 db_config={
     'host':'localhost',
     'user':'root',
-    'password':'pyk114514',
+    'password':'你的数据库密码',
     'database':'account_id',
     'charset':'utf8mb4'
 }
