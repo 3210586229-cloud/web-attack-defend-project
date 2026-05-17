@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上传文件--纯大子的网盘</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+    <style>
+        label {
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input[type="file"] {
+            cursor: pointer;
+        }
+
+        input[type="file"]::file-selector-button {
+            margin-right: 14px;
+            padding: 10px 14px;
+            color: #ffffff;
+            background: rgba(59, 130, 246, 0.72);
+            border: 0;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .back-link {
+            position: relative;
+            z-index: 1;
+            color: #93c5fd;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: #bfdbfe;
+        }
+    </style>
+</head>
+<body>
+    <canvas class="particle-canvas"></canvas>
+    <h2>上传文件</h2>
+
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <label for="file">选择文件</label>
+        <input type="file" id="file" name="file" required>
+
+        <label for="customName">可选新文件名</label>
+        <input type="text" id="customName" name="customName" placeholder="留空则使用原文件名">
+
+        <button type="submit">上传文件</button>
+    </form>
+
+    <a class="back-link" href="{{ url_for('profile') }}">返回个人主页</a>
+    <script src="{{ url_for('static', filename='particle.js') }}"></script>
+</body>
+</html>

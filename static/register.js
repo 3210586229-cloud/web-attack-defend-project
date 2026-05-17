@@ -1,22 +1,36 @@
 const form = document.querySelector('form');
-      const password = document.querySelector('input[name="password"]');
-      const confirmPassword = document.querySelector('input[name="confirm_password"]');
-      const errorMessage = document.querySelector('#password_error');
+const username = document.querySelector('input[name="username"]');
+const password = document.querySelector('input[name="password"]');
+const confirmPassword = document.querySelector('input[name="confirm_password"]');
+const usernameError = document.querySelector('#username_error');
+const passwordError = document.querySelector('#password_error');
 
-      form.addEventListener('submit', function (event) {
-          if (password.value !== confirmPassword.value) {
-              event.preventDefault();
+function shakeInput(input) {
+    input.classList.add('input-error', 'shake');
+    input.addEventListener('animationend', function () {
+        input.classList.remove('shake');
+    }, { once: true });
+}
 
-              errorMessage.textContent = '两次密码不一致';
-              confirmPassword.classList.add('input-error', 'shake');
+if (usernameError.textContent.trim()) {
+    shakeInput(username);
+}
 
-              confirmPassword.addEventListener('animationend', function () {
-                  confirmPassword.classList.remove('shake');
-              }, { once: true });
-          }
-      });
+form.addEventListener('submit', function (event) {
+    if (password.value !== confirmPassword.value) {
+        event.preventDefault();
 
-      confirmPassword.addEventListener('input', function () {
-          errorMessage.textContent = '';
-          confirmPassword.classList.remove('input-error');
-      });
+        passwordError.textContent = '两次密码不一致';
+        shakeInput(confirmPassword);
+    }
+});
+
+username.addEventListener('input', function () {
+    usernameError.textContent = '';
+    username.classList.remove('input-error');
+});
+
+confirmPassword.addEventListener('input', function () {
+    passwordError.textContent = '';
+    confirmPassword.classList.remove('input-error');
+});

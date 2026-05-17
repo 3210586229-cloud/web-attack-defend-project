@@ -1,35 +1,16 @@
-from flask import Flask, request,render_template##absort,send_file
-##from pathlib import Path
-##from typing import Optional
+from flask import Flask, request,render_template,redirect,abort,send_from_directory,session
+import os
+from werkzeug.utils import secure_filename
 import pymysql
+from flask import session
 app=Flask(__name__)
-##用于渲染profile页面（存在视频片段和jpg图片）
-##def first_existing_path(*candidates: str) -> Optional[Path]:
-##    for candidate in candidates:
-##        path = Path(candidate)
-##        if path.exists():
-##            return path
-##    return None
+app.secret_key='my-secret-key'##session加密码
 
 
-##MEDIA_FILES = {
-##    "avatar": first_existing_path(
-##        r"C:\Users\byd\Pictures\化学有机\下载.webp",
-##        r"C:\Users\byd\Pictures\Camera Roll\laotou.jpg",
-##        r"C:\Users\byd\Pictures\Camera Roll\dayun.jpg",
-##    ),
-##    "video1": first_existing_path(
-##        r"C:\Users\byd\Videos\NVIDIA\League of Legends\League of Legends 2026.02.28 - 21.09.54.01.mp4",
-##    ),
-##    "video2": first_existing_path(
-##        r"C:\Users\byd\Videos\NVIDIA\Yuan Shen 原神\Yuan Shen 原神 2026.02.21 - 16.42.35.02.mp4",
-##    ),
-##}
-##链接数据库
 db_config={
     'host':'localhost',
     'user':'root',
-    'password':'你的数据库密码',
+    'password':'pyk114514',
     'database':'account_id',
     'charset':'utf8mb4'
 }
@@ -51,8 +32,8 @@ def login_post():
         #form可以读取页面输入文本的参数
         username_ = request.form.get('username')
         password_ = request.form.get('password')
-        conn=get_db_connection()
-        cursor=conn.cursor()
+        conn=get_db_connection()#建立连接
+        cursor=conn.cursor()#获取游标
         sql=f"SELECT * FROM users WHERE username='{username_}'AND password='{password_}'"
         cursor.execute(sql)
         user=cursor.fetchone()
@@ -60,18 +41,22 @@ def login_post():
         conn.close()
 
         if user:
-            return render_template('profile.html')
+            session['username']=username_##记录登录状态
+            return redirect('/profile')
         else:
             return '<html><body><h2>登录失败</h2><a href="/login">回去重写</a></body></html>>'
+##判断登录状态
+@app.route('/profile')
+def profile():
+    if 'username' not in session:
+        return redirect('/login')
+    return render_template('profile.html')##原视频为返回文件列表
 
+@app.route('/logout')##登出表单
+def logout():
+    session.clear()
+    return redirect('/')
 
-        #return f"收到登录请求，用户名：{username_},密码：{password_}"
-##@app.route("/media/<name>")
-##def media(name: str):
-##    path = MEDIA_FILES.get(name)
-##    if path is None or not path.exists():
-##        abort(404)
-##    return send_file(path, conditional=True)
 
 ###注册功能实现
 @app.route('/register',methods=['GET'])
@@ -88,18 +73,106 @@ def register_post():
 
     conn=get_db_connection()#建立连接
     cursor=conn.cursor()#获取游标
+    cursor.execute("SELECT * FROM users WHERE username=%s", (username_,))
+    if cursor.fetchone():
+        cursor.close()
+        conn.close()
+        return render_template('register.html', username=username_, username_error='用户名已存在')
 #sql拼接？
     sql=f"INSERT INTO users(username,password)VALUES('{username_}','{password_}')"
     try:
         cursor.execute(sql)
         conn.commit()
 
-        return '<html><body><h2>注册成功</h2><a href="/login">去登陆</a></body></html>'
+        return redirect('/')
     except Exception as e:
         return f'<html><body><h2>注册失败</h2><p>{e}</p><a href="/register">返回</a></body></html>'
     finally:
         cursor.close()
         conn.close()
+
+
+##上传文件
+UPLOAD_FOLDER = 'uploads'  # 相对路径，会在根目录下创建
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER  ##什么玩意儿？
+@app.route('/upload',methods=['GET','POST'])
+def upload_file():
+    if 'username' not in session:
+        return redirect('/login')##稍作改变返回登陆界面
+    if request.method=='GET':
+        return render_template('upload.html')
+    username_=session['username']
+
+    ##获取上传的文件对象
+    file=request.files['file']
+    if file.filename=='':
+        return "未选择文件"
+
+    ##获取用户自定义文件名
+    custom_name=request.form.get('customName','')
+    if custom_name.strip():
+        filename=secure_filename(custom_name)##防止路径遍历攻击？
+    else:
+        filename=secure_filename(file.filename)
+
+    ##创建用户目录
+    user_dir=os.path.join(app.config['UPLOAD_FOLDER'],username_)
+    os.makedirs(user_dir,exist_ok=True)
+
+    ##保存文件
+    save_path=os.path.join(user_dir,filename)
+    file.save(save_path)
+
+    return redirect('/listfiles')
+
+##展示文件列表并提供下载链接
+@app.route('/listfiles')
+def list_files():
+    if 'username' not in session:
+        return redirect('/login')
+    username_ = session['username']
+    user_dir=os.path.join(app.config['UPLOAD_FOLDER'],username_)
+
+    files=[]
+    if os.path.exists(user_dir):
+        for filename in os.listdir(user_dir):
+            filepath=os.path.join(user_dir,filename)
+            if os.path.isfile(filepath):
+                files.append(filename)
+    return render_template('filelist.html',username=username_,files=files)
+### 文件下载功能（新增）
+@app.route('/download')
+def download_file():
+    if 'username' not in session:
+        return "未登录", 401
+    username_ = session['username']
+    filename = request.args.get('filename')
+    if not filename:
+        return "缺少文件名", 400
+    user_dir = os.path.join(app.config['UPLOAD_FOLDER'], username_)
+    file_path = os.path.join(user_dir, filename)
+    if not os.path.exists(file_path):
+        abort(404)
+        ##最后一步发送文件
+    return send_from_directory(user_dir, filename, as_attachment=True)
+
+
+### 文件删除功能（新增）
+@app.route('/delete')
+def delete_file():
+    if 'username' not in session:
+        return "未登录", 401
+    username_ = session['username']
+    filename = request.args.get('filename')
+    if not filename:
+        return "缺少文件名", 400
+    user_dir = os.path.join(app.config['UPLOAD_FOLDER'], username_)
+    file_path = os.path.join(user_dir, filename)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        return redirect('/listfiles')
+    else:
+        return "文件不存在", 404
 
 
 if __name__=='__main__':
