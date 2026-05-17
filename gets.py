@@ -1,35 +1,35 @@
-from flask import Flask, request,render_template,abort,send_file
-from pathlib import Path
-from typing import Optional
+from flask import Flask, request,render_template##absort,send_file
+##from pathlib import Path
+##from typing import Optional
 import pymysql
 app=Flask(__name__)
 ##用于渲染profile页面（存在视频片段和jpg图片）
-def first_existing_path(*candidates: str) -> Optional[Path]:
-    for candidate in candidates:
-        path = Path(candidate)
-        if path.exists():
-            return path
-    return None
+##def first_existing_path(*candidates: str) -> Optional[Path]:
+##    for candidate in candidates:
+##        path = Path(candidate)
+##        if path.exists():
+##            return path
+##    return None
 
 
-MEDIA_FILES = {
-    "avatar": first_existing_path(
-        r"C:\Users\byd\Pictures\化学有机\下载.webp",
-        r"C:\Users\byd\Pictures\Camera Roll\laotou.jpg",
-        r"C:\Users\byd\Pictures\Camera Roll\dayun.jpg",
-    ),
-    "video1": first_existing_path(
-        r"C:\Users\byd\Videos\NVIDIA\League of Legends\League of Legends 2026.02.28 - 21.09.54.01.mp4",
-    ),
-    "video2": first_existing_path(
-        r"C:\Users\byd\Videos\NVIDIA\Yuan Shen 原神\Yuan Shen 原神 2026.02.21 - 16.42.35.02.mp4",
-    ),
-}
+##MEDIA_FILES = {
+##    "avatar": first_existing_path(
+##        r"C:\Users\byd\Pictures\化学有机\下载.webp",
+##        r"C:\Users\byd\Pictures\Camera Roll\laotou.jpg",
+##        r"C:\Users\byd\Pictures\Camera Roll\dayun.jpg",
+##    ),
+##    "video1": first_existing_path(
+##        r"C:\Users\byd\Videos\NVIDIA\League of Legends\League of Legends 2026.02.28 - 21.09.54.01.mp4",
+##    ),
+##    "video2": first_existing_path(
+##        r"C:\Users\byd\Videos\NVIDIA\Yuan Shen 原神\Yuan Shen 原神 2026.02.21 - 16.42.35.02.mp4",
+##    ),
+##}
 ##链接数据库
 db_config={
     'host':'localhost',
     'user':'root',
-    'password':'你的数据库密码',
+    'password':'pyk114514',
     'database':'account_id',
     'charset':'utf8mb4'
 }
@@ -66,12 +66,12 @@ def login_post():
 
 
         #return f"收到登录请求，用户名：{username_},密码：{password_}"
-@app.route("/media/<name>")
-def media(name: str):
-    path = MEDIA_FILES.get(name)
-    if path is None or not path.exists():
-        abort(404)
-    return send_file(path, conditional=True)
+##@app.route("/media/<name>")
+##def media(name: str):
+##    path = MEDIA_FILES.get(name)
+##    if path is None or not path.exists():
+##        abort(404)
+##    return send_file(path, conditional=True)
 
 ###注册功能实现
 @app.route('/register',methods=['GET'])
