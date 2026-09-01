@@ -157,7 +157,7 @@
                         <td>
                             <div class="row-actions">
                                 <a href="/download?filename={{ file }}">下载</a>
-                                <a href="/delete?filename={{ file }}" onclick="return confirm('确定要删除吗？')">删除</a>
+                                <a href="/delete?filename={{ file|urlencode }}&csrf_token={{ csrf_token() }}" onclick="return confirm('确定要删除吗？')">删除</a>
                             </div>
                         </td>
                     </tr>

@@ -1,0 +1,46 @@
+<!doctype html><html><head><meta charset='utf-8'><style>
+      body{margin:0;background:#101827;color:#e5edf8;font:16px Consolas,'Microsoft YaHei',monospace}
+      main{padding:28px 34px} h1{font:700 24px Arial,'Microsoft YaHei';color:#8ec5ff;margin:0 0 22px}
+      h2{font:600 17px Arial,'Microsoft YaHei';color:#9bd2ff;margin:22px 0 8px}
+      pre{margin:0;padding:14px 16px;background:#172338;border:1px solid #304866;border-radius:4px;line-height:1.45;white-space:pre-wrap}
+    </style></head><body><main><h1>任务 09 修复代码证据</h1><h2>gets.py:195-215</h2><pre> 195          if user and user[1].startswith((&quot;pbkdf2:&quot;, &quot;scrypt:&quot;))
+ 196          else bool(user) and user[1] == password
+ 197      )
+ 198      if not valid:
+ 199          record_login_failure(username)
+ 200          response = {&quot;error&quot;: &quot;用户名或密码错误&quot;}
+ 201          return (jsonify(response), 401) if as_api else (&quot;用户名或密码错误&quot;, 401)
+ 202      clear_login_failures(username)
+ 203      session.clear()
+ 204      csrf_token()
+ 205      session[&quot;username&quot;] = username
+ 206      if user and not user[1].startswith((&quot;pbkdf2:&quot;, &quot;scrypt:&quot;)):
+ 207          conn = get_db_connection()
+ 208          try:
+ 209              with conn.cursor() as cursor:
+ 210                  cursor.execute(&quot;UPDATE users SET password=%s WHERE username=%s&quot;, (generate_password_hash(password), username))
+ 211              conn.commit()
+ 212          finally:
+ 213              conn.close()
+ 214      security_logger.info(&quot;login_success username=%s ip=%s&quot;, username, client_ip())
+ 215      if as_api:</pre><h2>gets.py:238-258</h2><pre> 238  
+ 239  @app.post(&quot;/api/logout&quot;)
+ 240  @csrf_protected
+ 241  def api_logout():
+ 242      session.clear()
+ 243      return jsonify({&quot;success&quot;: True})
+ 244  
+ 245  
+ 246  @app.get(&quot;/profile&quot;)
+ 247  def profile():
+ 248      if &quot;username&quot; not in session:
+ 249          return redirect(&quot;/login&quot;)
+ 250      return render_template(&quot;profile.html&quot;)
+ 251  
+ 252  
+ 253  @app.get(&quot;/logout&quot;)
+ 254  def logout():
+ 255      session.clear()
+ 256      security_logger.info(&quot;logout ip=%s&quot;, client_ip())
+ 257      return redirect(&quot;/&quot;)
+ 258  </pre></main></body></html>

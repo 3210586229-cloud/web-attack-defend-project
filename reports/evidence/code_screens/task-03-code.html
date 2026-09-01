@@ -1,0 +1,50 @@
+<!doctype html><html><head><meta charset='utf-8'><style>
+      body{margin:0;background:#101827;color:#e5edf8;font:16px Consolas,'Microsoft YaHei',monospace}
+      main{padding:28px 34px} h1{font:700 24px Arial,'Microsoft YaHei';color:#8ec5ff;margin:0 0 22px}
+      h2{font:600 17px Arial,'Microsoft YaHei';color:#9bd2ff;margin:22px 0 8px}
+      pre{margin:0;padding:14px 16px;background:#172338;border:1px solid #304866;border-radius:4px;line-height:1.45;white-space:pre-wrap}
+    </style></head><body><main><h1>任务 03 修复代码证据</h1><h2>templates/filelist.html:145-165</h2><pre> 145          &lt;div class=&quot;table-wrap&quot;&gt;
+ 146              &lt;table&gt;
+ 147                  &lt;thead&gt;
+ 148                      &lt;tr&gt;
+ 149                          &lt;th&gt;文件名&lt;/th&gt;
+ 150                          &lt;th&gt;操作&lt;/th&gt;
+ 151                      &lt;/tr&gt;
+ 152                  &lt;/thead&gt;
+ 153                  &lt;tbody&gt;
+ 154                      {% for file in files %}
+ 155                      &lt;tr&gt;
+ 156                          &lt;td class=&quot;file-name&quot;&gt;{{ file }}&lt;/td&gt;
+ 157                          &lt;td&gt;
+ 158                              &lt;div class=&quot;row-actions&quot;&gt;
+ 159                                  &lt;a href=&quot;/download?filename={{ file }}&quot;&gt;下载&lt;/a&gt;
+ 160                                  &lt;a href=&quot;/delete?filename={{ file|urlencode }}&amp;csrf_token={{ csrf_token() }}&quot; onclick=&quot;return confirm(&#x27;确定要删除吗？&#x27;)&quot;&gt;删除&lt;/a&gt;
+ 161                              &lt;/div&gt;
+ 162                          &lt;/td&gt;
+ 163                      &lt;/tr&gt;
+ 164                      {% else %}
+ 165                      &lt;tr&gt;</pre><h2>templates/login.html:1-25</h2><pre>   1  &lt;!DOCTYPE html&gt;
+   2  &lt;html lang=&quot;zh-CN&quot;&gt;
+   3  &lt;head&gt;
+   4      &lt;meta charset=&quot;UTF-8&quot;&gt;
+   5      &lt;title&gt;登录--纯大子的网盘&lt;/title&gt;
+   6      &lt;link rel=&quot;stylesheet&quot; href=&quot;{{ url_for(&#x27;static&#x27;, filename=&#x27;login.css&#x27;) }}&quot;&gt;
+   7  &lt;/head&gt;
+   8  &lt;body&gt;
+   9  &lt;canvas class=&quot;particle-canvas&quot;&gt;&lt;/canvas&gt;
+  10         &lt;a class=&quot;back-link&quot; href=&quot;{{ url_for(&#x27;index&#x27;) }}&quot;&gt;&amp;larr; 返回网页&lt;/a&gt;
+  11         &lt;h2&gt;登录&lt;/h2&gt;
+  12            &lt;form method=&quot;post&quot; action=&quot;/login&quot;&gt;
+  13                &lt;input type=&quot;hidden&quot; name=&quot;csrf_token&quot; value=&quot;{{ csrf_token() }}&quot;&gt;
+  14                &lt;p class=&quot;error_message&quot;&gt;{{ error or &#x27;&#x27; }}&lt;/p&gt;
+  15                &lt;!-- post方法提交数据和数据提交到当前网站的login路径--&gt;
+  16                &lt;input type=&quot;text&quot; name=&quot;username&quot; placeholder=&quot;用户名&quot; value=&quot;{{ username or &#x27;&#x27; }}&quot; autocomplete=&quot;username&quot; required&gt;
+  17                &lt;input type=&quot;password&quot; name=&quot;password&quot; placeholder=&quot;密码&quot; autocomplete=&quot;current-password&quot; required&gt;
+  18  
+  19  
+  20  
+  21                &lt;button type=&quot;submit&quot;&gt;登录&lt;/button&gt;
+  22            &lt;/form&gt;
+  23      &lt;script src=&quot;{{url_for(&#x27;static&#x27;,filename=&#x27;particle.js&#x27;)}}&quot;&gt;&lt;/script&gt;
+  24  &lt;/body&gt;
+  25  &lt;/html&gt;</pre></main></body></html>

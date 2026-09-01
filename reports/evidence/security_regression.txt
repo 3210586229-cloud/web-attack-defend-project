@@ -1,0 +1,36 @@
+阶段二安全回归测试证据
+测试时间：2026-08-30
+环境：本机 Flask test_client，数据库 localhost/account_id
+
+1. GET /login、GET /register：200；页面包含服务端 CSRF hidden token。
+2. 弱密码注册 report_weak/123456：HTTP 400，返回密码策略错误。
+3. POST /api/register 缺少 X-CSRF-Token：HTTP 403。
+4. POST /api/files 上传 payload.exe：HTTP 400，不支持的文件类型。
+5. POST /api/files 使用错误 CSRF Token：HTTP 403。
+6. 同一账号连续5次错误登录：均 HTTP 401；第5次后使用正确密码仍 HTTP 401，锁定生效。
+7. 未登录 GET /profile：302 /login；未登录 GET /api/files：401。
+8. GET /logout 后访问 /api/files：401，服务端会话已失效。
+9. 双账号复测：user2 访问 user1 文件、`../pyknb/user1_secret.txt` 和跨用户删除均返回404；测试文件已清理。
+10. 伪装图片复测：扩展名为 `.png` 但内容为普通文本时，服务端返回400“文件内容与扩展名不匹配”。
+11. Cookie/Session：登录前后 Session 值发生变化；登录后 Cookie 具备 HttpOnly、SameSite=Lax；HTTP 本地环境 Secure=false，HTTPS 部署需启用 Secure。
+12. SQLi 登录绕过无害探测：username/password 为 `' OR '1'='1` 时返回401，无跳转。
+13. XSS 文件名无害探测：脚本字符串未反射，未登录请求返回401。
+14. SSTI 无害探测：`{{7*7}}` 在 `/`、`/login`、`/register` 中均未计算为49。
+
+浏览器截图：
+- `screenshots/01-login-page.png` 登录页面及返回首页按钮
+- `screenshots/02-register-page.png` 注册页面及返回首页按钮
+- `screenshots/03-login-error.png` 统一登录错误提示
+- `screenshots/04-login-lockout.png` 连续错误登录限制
+- `screenshots/05-register-weak-password.png` 弱密码注册拦截
+- `screenshots/06-profile-authenticated.png` 登录成功后的个人主页
+- `screenshots/07-upload-page.png` 上传页面
+- `screenshots/08-dangerous-upload-rejected.png` 危险扩展名上传拦截
+- `screenshots/09-fake-image-rejected.png` 伪装图片文件头拦截
+- `screenshots/10-csrf-rejected.png` 缺少 CSRF Token 返回403
+- `screenshots/11-after-logout-redirect.png` 退出后访问个人主页重定向登录
+- `screenshots/12-cookie-session-properties.png` Cookie 属性与登录前后 Session 对比
+- `screenshots/13-idor-path-traversal-rejected.png` 双账号越权和路径穿越复测
+- `negative_probes.txt` SQLi、XSS、SSTI 无害探测结果
+
+说明：测试未执行删除真实文件、命令执行、WebShell、远程扫描等破坏性操作。

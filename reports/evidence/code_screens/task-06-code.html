@@ -1,0 +1,68 @@
+<!doctype html><html><head><meta charset='utf-8'><style>
+      body{margin:0;background:#101827;color:#e5edf8;font:16px Consolas,'Microsoft YaHei',monospace}
+      main{padding:28px 34px} h1{font:700 24px Arial,'Microsoft YaHei';color:#8ec5ff;margin:0 0 22px}
+      h2{font:600 17px Arial,'Microsoft YaHei';color:#9bd2ff;margin:22px 0 8px}
+      pre{margin:0;padding:14px 16px;background:#172338;border:1px solid #304866;border-radius:4px;line-height:1.45;white-space:pre-wrap}
+    </style></head><body><main><h1>任务 06 修复代码证据</h1><h2>gets.py:20-42</h2><pre>  20  
+  21  app = Flask(__name__)
+  22  app.secret_key = os.environ.get(&quot;FLASK_SECRET_KEY&quot;) or secrets.token_hex(32)
+  23  app.config.update(
+  24      SESSION_COOKIE_HTTPONLY=True,
+  25      SESSION_COOKIE_SAMESITE=&quot;Lax&quot;,
+  26      SESSION_COOKIE_SECURE=os.environ.get(&quot;FLASK_COOKIE_SECURE&quot;, &quot;0&quot;) == &quot;1&quot;,
+  27      MAX_CONTENT_LENGTH=16 * 1024 * 1024,
+  28  )
+  29  logging.basicConfig(level=logging.INFO, format=&quot;%(asctime)s %(levelname)s %(message)s&quot;)
+  30  security_logger = logging.getLogger(&quot;webdrive.security&quot;)
+  31  
+  32  db_config = {
+  33      &quot;host&quot;: os.environ.get(&quot;DB_HOST&quot;, &quot;localhost&quot;),
+  34      &quot;user&quot;: os.environ.get(&quot;DB_USER&quot;, &quot;root&quot;),
+  35      &quot;password&quot;: os.environ.get(&quot;DB_PASSWORD&quot;, &quot;pyk114514&quot;),
+  36      &quot;database&quot;: os.environ.get(&quot;DB_NAME&quot;, &quot;account_id&quot;),
+  37      &quot;charset&quot;: &quot;utf8mb4&quot;,
+  38  }
+  39  UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), &quot;uploads&quot;)
+  40  app.config[&quot;UPLOAD_FOLDER&quot;] = UPLOAD_FOLDER
+  41  
+  42  LOGIN_MAX_FAILURES = 5</pre><h2>gets.py:309-349</h2><pre> 309  def upload_file():
+ 310      if &quot;username&quot; not in session:
+ 311          return redirect(&quot;/login&quot;)
+ 312      if request.method == &quot;GET&quot;:
+ 313          return render_template(&quot;upload.html&quot;)
+ 314      supplied = request.form.get(&quot;csrf_token&quot;)
+ 315      if not supplied or not secrets.compare_digest(supplied, session.get(&quot;csrf_token&quot;, &quot;&quot;)):
+ 316          return jsonify({&quot;error&quot;: &quot;请求验证失败，请刷新页面后重试&quot;}), 403
+ 317      result = _save_upload(request.files.get(&quot;file&quot;), request.form.get(&quot;customName&quot;, &quot;&quot;))
+ 318      return redirect(&quot;/listfiles&quot;) if result[1] == 200 else result
+ 319  
+ 320  
+ 321  def _save_upload(file, custom_name=&quot;&quot;):
+ 322      if not file or not file.filename:
+ 323          return jsonify({&quot;error&quot;: &quot;请选择文件&quot;}), 400
+ 324      filename = secure_filename(custom_name.strip() or file.filename)
+ 325      if not filename:
+ 326          return jsonify({&quot;error&quot;: &quot;文件名无效&quot;}), 400
+ 327      extension = filename.rsplit(&quot;.&quot;, 1)[-1].casefold() if &quot;.&quot; in filename else &quot;&quot;
+ 328      if extension not in ALLOWED_EXTENSIONS:
+ 329          security_logger.warning(&quot;upload_rejected username=%s ip=%s filename=%s reason=extension&quot;, session.get(&quot;username&quot;), client_ip(), filename)
+ 330          return jsonify({&quot;error&quot;: &quot;不支持的文件类型&quot;}), 400
+ 331      if file.content_length and file.content_length &gt; app.config[&quot;MAX_CONTENT_LENGTH&quot;]:
+ 332          return jsonify({&quot;error&quot;: &quot;文件大小超过限制&quot;}), 413
+ 333      signatures = FILE_SIGNATURES.get(extension)
+ 334      if signatures:
+ 335          header = file.stream.read(16)
+ 336          file.stream.seek(0)
+ 337          if not any(header.startswith(signature) for signature in signatures):
+ 338              security_logger.warning(&quot;upload_rejected username=%s ip=%s filename=%s reason=file_signature&quot;, session.get(&quot;username&quot;), client_ip(), filename)
+ 339              return jsonify({&quot;error&quot;: &quot;文件内容与扩展名不匹配&quot;}), 400
+ 340      user_dir = os.path.join(app.config[&quot;UPLOAD_FOLDER&quot;], session[&quot;username&quot;])
+ 341      os.makedirs(user_dir, exist_ok=True)
+ 342      file.save(os.path.join(user_dir, filename))
+ 343      security_logger.info(&quot;upload_success username=%s ip=%s filename=%s&quot;, session.get(&quot;username&quot;), client_ip(), filename)
+ 344      return jsonify({&quot;success&quot;: True, &quot;file&quot;: filename}), 200
+ 345  
+ 346  
+ 347  @app.post(&quot;/api/files&quot;)
+ 348  @api_login_required
+ 349  @csrf_protected</pre></main></body></html>

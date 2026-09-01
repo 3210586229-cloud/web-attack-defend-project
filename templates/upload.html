@@ -44,6 +44,7 @@
     <h2>上传文件</h2>
 
     <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label for="file">选择文件</label>
         <input type="file" id="file" name="file" required>
 

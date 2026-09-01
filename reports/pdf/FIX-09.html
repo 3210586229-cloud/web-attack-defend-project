@@ -1,0 +1,22 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'><style>
+    @page { size: A4; margin: 18mm 16mm; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif; color:#1f2937; line-height:1.65; font-size:11pt; }
+    h1 { color:#0f3b78; font-size:22pt; border-bottom:2px solid #2f7cff; padding-bottom:8px; margin:0 0 20px; }
+    h2 { color:#174a85; font-size:14pt; margin:18px 0 6px; border-left:4px solid #2f7cff; padding-left:8px; }
+    h3 { color:#315b8e; font-size:12pt; margin:12px 0 4px; }
+    p { margin:5px 0 9px; }
+    .meta { background:#f1f6ff; border:1px solid #c7d9f5; padding:10px 14px; border-radius:6px; }
+    .label { font-weight:700; color:#174a85; }
+    .evidence { background:#f8fafc; border-left:3px solid #60a5fa; padding:8px 12px; white-space:pre-wrap; }
+    .footer { margin-top:28px; color:#64748b; font-size:9pt; border-top:1px solid #dbe4f0; padding-top:8px; }
+     figure { margin:10px 0 16px; break-inside:avoid; } figure img { display:block; margin:auto; border:1px solid #cbd5e1; } figcaption { color:#64748b; font-size:9pt; text-align:center; margin-top:4px; }</style></head><body><h1>安全加固报告 FIX-09：会话管理、登出与Cookie安全</h1>
+    <div class='meta'><div><span class='label'>修复漏洞类型：</span>会话管理、登出与Cookie安全</div><div><span class='label'>修复小组：</span>天亮了吗</div><div><span class='label'>修复时间：</span>2026-08-28</div><div><span class='label'>对应漏洞报告：</span>VULN-09-会话管理、登出与Cookie安全</div><div><span class='label'>修复负责人：</span>蒲云楷</div></div>
+    <h2>1. 基本信息</h2><p>本报告按附录A记录阶段二任务9的修复和验证。</p>
+    <h2>2. 漏洞复现情况</h2><p><span class='label'>是否能按攻击方步骤复现：</span>修复前基线已记录；修复后原始参数应被拦截或不产生越权效果。<br><span class='label'>复现环境：</span>本机 127.0.0.1:5001。</p><div class='evidence'><figure><img src='../evidence/task_screens/task-09/01-before-login.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务9现场截图'></figure><figure><img src='../evidence/task_screens/task-09/02-profile-session.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务9现场截图'></figure><figure><img src='../evidence/task_screens/task-09/03-files-session.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务9现场截图'></figure><figure><img src='../evidence/task_screens/task-09/04-after-logout.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务9现场截图'></figure><figure><figcaption>修复代码截图（实际源文件与行号）</figcaption><img src='../evidence/code_screens/task-09-code.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务修复代码截图'></figure></div>
+    <h2>3. 根因定位</h2><p><span class='label'>相关文件：</span>gets.py、相关模板和前端 API 客户端。<br><span class='label'>相关函数或接口：</span>/login、/logout、/profile、/api/files；Flask Session。<br><span class='label'>问题代码/根因：</span>会话生命周期和 Cookie 属性需要显式安全配置。</p>
+    <h2>4. 修复措施</h2><h3>修改点1</h3><p><span class='label'>修改文件：</span>gets.py。<br><span class='label'>修改前逻辑：</span>缺少统一安全边界或校验。<br><span class='label'>修改后逻辑：</span>启用 HttpOnly、SameSite=Lax 和可选 Secure；登录成功前清理旧 Session；退出 session.clear()；核心接口统一认证。</p><h3>修改点2</h3><p><span class='label'>修改文件：</span>相关 HTML/CSS/前端 API（按任务适用）。<br><span class='label'>修改后逻辑：</span>页面和客户端与服务端安全校验保持一致，不能替代服务端校验。</p>
+    <h2>5. 修复后验证</h2><p>使用攻击方原始步骤重新测试：<br>1. 发送原始无害测试参数。<br>2. 观察状态码、页面、数据、文件和日志。<br>3. 确认原攻击失效并保存截图。</p><div class='evidence'>验证结果：登录前后 Session 值发生变化；Cookie 具备 HttpOnly、SameSite=Lax；退出后访问核心 API 返回401。<br>原攻击是否失效：是（本机回归测试）<br><figure><img src='../evidence/task_screens/task-09/01-before-login.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务9现场截图'></figure><figure><img src='../evidence/task_screens/task-09/02-profile-session.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务9现场截图'></figure><figure><img src='../evidence/task_screens/task-09/03-files-session.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务9现场截图'></figure><figure><img src='../evidence/task_screens/task-09/04-after-logout.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务9现场截图'></figure><figure><figcaption>修复代码截图（实际源文件与行号）</figcaption><img src='../evidence/code_screens/task-09-code.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务修复代码截图'></figure></div>
+    <h2>6. 额外加固</h2><p>统一错误提示、输入长度限制、安全日志、Cookie 安全属性、调试模式关闭和生产密钥配置要求。</p>
+    <h2>7. 仍需改进</h2><p>课程组别、负责人、Git tag 等元数据需在提交前填写；HTTPS 部署时启用 Secure Cookie；Web 服务器需确认上传目录不可执行。</p>
+    <div class='footer'>阶段二安全报告｜测试范围：本机 Flask 网盘及课程数据库｜测试时间：2026-08-28</div></body></html>

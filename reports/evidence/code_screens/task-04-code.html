@@ -1,0 +1,50 @@
+<!doctype html><html><head><meta charset='utf-8'><style>
+      body{margin:0;background:#101827;color:#e5edf8;font:16px Consolas,'Microsoft YaHei',monospace}
+      main{padding:28px 34px} h1{font:700 24px Arial,'Microsoft YaHei';color:#8ec5ff;margin:0 0 22px}
+      h2{font:600 17px Arial,'Microsoft YaHei';color:#9bd2ff;margin:22px 0 8px}
+      pre{margin:0;padding:14px 16px;background:#172338;border:1px solid #304866;border-radius:4px;line-height:1.45;white-space:pre-wrap}
+    </style></head><body><main><h1>任务 04 修复代码证据</h1><h2>gets.py:64-90</h2><pre>  64  
+  65  
+  66  def csrf_token():
+  67      token = session.get(&quot;csrf_token&quot;)
+  68      if not token:
+  69          token = secrets.token_urlsafe(32)
+  70          session[&quot;csrf_token&quot;] = token
+  71      return token
+  72  
+  73  
+  74  @app.context_processor
+  75  def inject_security_helpers():
+  76      return {&quot;csrf_token&quot;: csrf_token}
+  77  
+  78  
+  79  def csrf_protected(view):
+  80      @wraps(view)
+  81      def wrapped(*args, **kwargs):
+  82          supplied = request.form.get(&quot;csrf_token&quot;) or request.headers.get(&quot;X-CSRF-Token&quot;)
+  83          expected = session.get(&quot;csrf_token&quot;)
+  84          if not expected or not supplied or not secrets.compare_digest(supplied, expected):
+  85              return jsonify({&quot;error&quot;: &quot;请求验证失败，请刷新页面后重试&quot;}), 403
+  86          return view(*args, **kwargs)
+  87  
+  88      return wrapped
+  89  
+  90  </pre><h2>gets.py:302-320</h2><pre> 302  @csrf_protected
+ 303  def api_register():
+ 304      data = request.get_json(silent=True) or request.form
+ 305      return _register(data.get(&quot;username&quot;, &quot;&quot;).strip(), data.get(&quot;password&quot;, &quot;&quot;), data.get(&quot;confirm_password&quot;, &quot;&quot;))
+ 306  
+ 307  
+ 308  @app.route(&quot;/upload&quot;, methods=[&quot;GET&quot;, &quot;POST&quot;])
+ 309  def upload_file():
+ 310      if &quot;username&quot; not in session:
+ 311          return redirect(&quot;/login&quot;)
+ 312      if request.method == &quot;GET&quot;:
+ 313          return render_template(&quot;upload.html&quot;)
+ 314      supplied = request.form.get(&quot;csrf_token&quot;)
+ 315      if not supplied or not secrets.compare_digest(supplied, session.get(&quot;csrf_token&quot;, &quot;&quot;)):
+ 316          return jsonify({&quot;error&quot;: &quot;请求验证失败，请刷新页面后重试&quot;}), 403
+ 317      result = _save_upload(request.files.get(&quot;file&quot;), request.form.get(&quot;customName&quot;, &quot;&quot;))
+ 318      return redirect(&quot;/listfiles&quot;) if result[1] == 200 else result
+ 319  
+ 320  </pre></main></body></html>

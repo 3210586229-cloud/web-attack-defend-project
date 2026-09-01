@@ -1,0 +1,25 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'><style>
+    @page { size: A4; margin: 18mm 16mm; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif; color:#1f2937; line-height:1.65; font-size:11pt; }
+    h1 { color:#0f3b78; font-size:22pt; border-bottom:2px solid #2f7cff; padding-bottom:8px; margin:0 0 20px; }
+    h2 { color:#174a85; font-size:14pt; margin:18px 0 6px; border-left:4px solid #2f7cff; padding-left:8px; }
+    h3 { color:#315b8e; font-size:12pt; margin:12px 0 4px; }
+    p { margin:5px 0 9px; }
+    .meta { background:#f1f6ff; border:1px solid #c7d9f5; padding:10px 14px; border-radius:6px; }
+    .label { font-weight:700; color:#174a85; }
+    .evidence { background:#f8fafc; border-left:3px solid #60a5fa; padding:8px 12px; white-space:pre-wrap; }
+    .footer { margin-top:28px; color:#64748b; font-size:9pt; border-top:1px solid #dbe4f0; padding-top:8px; }
+     figure { margin:10px 0 16px; break-inside:avoid; } figure img { display:block; margin:auto; border:1px solid #cbd5e1; } figcaption { color:#64748b; font-size:9pt; text-align:center; margin-top:4px; }</style></head><body><h1>漏洞报告 VULN-05：越权访问、IDOR与文件读取</h1>
+    <div class='meta'><div><span class='label'>漏洞类型：</span>越权访问、IDOR与文件读取</div><div><span class='label'>测试小组：</span>天亮了吗</div><div><span class='label'>被测小组：</span>天亮了吗</div><div><span class='label'>测试时间：</span>2026-08-24</div><div><span class='label'>测试环境：</span>本机 localhost / 127.0.0.1:5001</div><div><span class='label'>测试账号：</span>课程测试账号，未使用真实个人密码</div></div>
+    <h2>1. 基本信息</h2><p>本报告针对阶段二任务5，仅在授权的本机课程靶场中完成。</p>
+    <h2>2. 漏洞位置</h2><p><span class='label'>URL/接口：</span>/download、/delete、/api/files/&lt;filename&gt;<br><span class='label'>请求方法：</span>GET/POST/DELETE（按接口实际方法）<br><span class='label'>关键参数：</span>username、password、filename、file、csrf_token（按任务适用）<br><span class='label'>所属功能：</span>文件下载/删除</p>
+    <h2>3. 正常请求</h2><p>先使用正常账号和合法参数完成对应功能，再仅修改一个测试参数。请求记录和页面证据见附件目录。</p>
+    <div class='evidence'>正常请求示例：在本机浏览器访问对应页面，提交课程测试账号或合法文件；不包含真实密码、Cookie 或 Token。</div>
+    <h2>4. 漏洞复现步骤</h2><p>1. 启动本机网盘并登录课程测试账号。<br>2. 按任务说明构造单一无害测试参数。<br>3. 发送请求并记录状态码、页面、文件或会话变化。<br>4. 使用修复后的同一参数再次验证。</p>
+    <h2>5. 攻击效果或异常现象</h2><p>创建 测试文件 和 测试文件；user2 访问 user1 文件、测试文件 和跨用户删除均返回404。</p>
+    <h2>6. 漏洞原因分析</h2><p>资源路径必须绑定当前 Session 用户，不能信任客户端 user/path 参数；文件名需要规范化。</p>
+    <h2>7. 影响范围</h2><p>影响范围限于本机课程靶场及测试账号；不得外推为公网系统影响。具体后果取决于接口是否需要登录及资源归属。</p>
+    <h2>8. 修复建议</h2><p>用户目录只来自 Session；统一使用 secure_filename 和当前用户目录；下载、删除、API 共用资源归属检查。</p>
+    <h2>9. 附件清单</h2><div class='evidence'><figure><img src='../evidence/task_screens/task-05/01-own-files.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务5现场截图'></figure><figure><img src='../evidence/task_screens/task-05/02-traversal-rejected.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务5现场截图'></figure><figure><img src='../evidence/task_screens/task-05/03-cross-user-rejected.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务5现场截图'></figure><figure><img src='../evidence/task_screens/task-05/04-scoped-api.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务5现场截图'></figure><figure><figcaption>修复代码截图（实际源文件与行号）</figcaption><img src='../evidence/code_screens/task-05-code.png' style='max-width:100%;max-height:220mm;object-fit:contain' alt='任务修复代码截图'></figure></div>
+    <div class='footer'>阶段二安全报告｜测试范围：本机 Flask 网盘及课程数据库｜测试时间：2026-08-24</div></body></html>

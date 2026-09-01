@@ -1,0 +1,4 @@
+环境恢复
+conda env create -f environment.yml
+数据库恢复
+mysql -u root -p account_id < account_id.sql

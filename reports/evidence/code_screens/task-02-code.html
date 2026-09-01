@@ -1,0 +1,35 @@
+<!doctype html><html><head><meta charset='utf-8'><style>
+      body{margin:0;background:#101827;color:#e5edf8;font:16px Consolas,'Microsoft YaHei',monospace}
+      main{padding:28px 34px} h1{font:700 24px Arial,'Microsoft YaHei';color:#8ec5ff;margin:0 0 22px}
+      h2{font:600 17px Arial,'Microsoft YaHei';color:#9bd2ff;margin:22px 0 8px}
+      pre{margin:0;padding:14px 16px;background:#172338;border:1px solid #304866;border-radius:4px;line-height:1.45;white-space:pre-wrap}
+    </style></head><body><main><h1>任务 02 修复代码证据</h1><h2>gets.py:185-200</h2><pre> 185          return (jsonify(response), 401) if as_api else (&quot;用户名或密码错误&quot;, 401)
+ 186      conn = get_db_connection()
+ 187      try:
+ 188          with conn.cursor() as cursor:
+ 189              cursor.execute(&quot;SELECT username, password FROM users WHERE username=%s&quot;, (username,))
+ 190              user = cursor.fetchone()
+ 191      finally:
+ 192          conn.close()
+ 193      valid = bool(user) and (
+ 194          check_password_hash(user[1], password)
+ 195          if user and user[1].startswith((&quot;pbkdf2:&quot;, &quot;scrypt:&quot;))
+ 196          else bool(user) and user[1] == password
+ 197      )
+ 198      if not valid:
+ 199          record_login_failure(username)
+ 200          response = {&quot;error&quot;: &quot;用户名或密码错误&quot;}</pre><h2>gets.py:285-299</h2><pre> 285      conn = get_db_connection()
+ 286      try:
+ 287          with conn.cursor() as cursor:
+ 288              cursor.execute(&quot;SELECT 1 FROM users WHERE username=%s&quot;, (username,))
+ 289              if cursor.fetchone():
+ 290                  return jsonify({&quot;error&quot;: &quot;用户名已存在&quot;}), 409
+ 291              cursor.execute(
+ 292                  &quot;INSERT INTO users(username, password) VALUES(%s, %s)&quot;,
+ 293                  (username, generate_password_hash(password)),
+ 294              )
+ 295          conn.commit()
+ 296      finally:
+ 297          conn.close()
+ 298      return jsonify({&quot;success&quot;: True}), 200
+ 299  </pre></main></body></html>

@@ -2,6 +2,19 @@ import axios from 'axios'
 
 export const http = axios.create({ baseURL: '/api', withCredentials: true })
 
+let csrfToken = ''
+
+http.interceptors.request.use(async (config) => {
+  if (!csrfToken && !config.url?.endsWith('/csrf')) {
+    const response = await http.get('/csrf')
+    csrfToken = response.data.csrf_token
+  }
+  if (csrfToken && ['post', 'put', 'patch', 'delete'].includes(config.method)) {
+    config.headers['X-CSRF-Token'] = csrfToken
+  }
+  return config
+})
+
 export async function getCurrentUser() {
   try {
     const { data } = await http.get('/me')

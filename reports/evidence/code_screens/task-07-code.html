@@ -1,0 +1,36 @@
+<!doctype html><html><head><meta charset='utf-8'><style>
+      body{margin:0;background:#101827;color:#e5edf8;font:16px Consolas,'Microsoft YaHei',monospace}
+      main{padding:28px 34px} h1{font:700 24px Arial,'Microsoft YaHei';color:#8ec5ff;margin:0 0 22px}
+      h2{font:600 17px Arial,'Microsoft YaHei';color:#9bd2ff;margin:22px 0 8px}
+      pre{margin:0;padding:14px 16px;background:#172338;border:1px solid #304866;border-radius:4px;line-height:1.45;white-space:pre-wrap}
+    </style></head><body><main><h1>任务 07 修复代码证据</h1><h2>gets.py:150-180</h2><pre> 150                      &quot;size&quot;: stat.st_size,
+ 151                      &quot;updated_at&quot;: stat.st_mtime,
+ 152                  }
+ 153              )
+ 154      return files
+ 155  
+ 156  
+ 157  @app.get(&quot;/&quot;)
+ 158  def index():
+ 159      return render_template(&quot;webpage.html&quot;)
+ 160  
+ 161  
+ 162  @app.get(&quot;/login&quot;)
+ 163  def login_page():
+ 164      csrf_token()
+ 165      return render_template(&quot;login.html&quot;)
+ 166  
+ 167  
+ 168  @app.post(&quot;/login&quot;)
+ 169  @csrf_protected
+ 170  def login_post():
+ 171      username = request.form.get(&quot;username&quot;, &quot;&quot;).strip()
+ 172      password = request.form.get(&quot;password&quot;, &quot;&quot;)
+ 173      result = _login(username, password, as_api=False)
+ 174      if isinstance(result, tuple) and len(result) == 2 and isinstance(result[1], int) and result[1] &gt;= 400:
+ 175          return render_template(&quot;login.html&quot;, error=result[0], username=username), result[1]
+ 176      return result
+ 177  
+ 178  
+ 179  def _login(username, password, as_api=True):
+ 180      if not username or not password:</pre></main></body></html>

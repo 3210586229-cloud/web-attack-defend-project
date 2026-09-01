@@ -7,8 +7,11 @@
 </head>
 <body>
     <canvas class="particle-canvas"></canvas>
+    <a class="back-link" href="{{ url_for('index') }}">&larr; 返回网页</a>
     <h2>注册</h2>
     <form method="post" action="/register">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <p class="error_message">{{ error or '' }}</p>
         <input type="text" name="username" placeholder="用户名" value="{{ username or '' }}" required>
         <p id="username_error" class="error_message">{{ username_error or '' }}</p>
 

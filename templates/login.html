@@ -7,11 +7,14 @@
 </head>
 <body>
 <canvas class="particle-canvas"></canvas>
+       <a class="back-link" href="{{ url_for('index') }}">&larr; 返回网页</a>
        <h2>登录</h2>
           <form method="post" action="/login">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <p class="error_message">{{ error or '' }}</p>
               <!-- post方法提交数据和数据提交到当前网站的login路径-->
-              用户名:<input type="text" name="username" placeholder="用户名" required><br>
-              密码：<input type="password" name="password" placeholder="密码" required><br>
+              <input type="text" name="username" placeholder="用户名" value="{{ username or '' }}" autocomplete="username" required>
+              <input type="password" name="password" placeholder="密码" autocomplete="current-password" required>
 
 
 

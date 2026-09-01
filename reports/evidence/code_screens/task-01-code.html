@@ -1,0 +1,113 @@
+<!doctype html><html><head><meta charset='utf-8'><style>
+      body{margin:0;background:#101827;color:#e5edf8;font:16px Consolas,'Microsoft YaHei',monospace}
+      main{padding:28px 34px} h1{font:700 24px Arial,'Microsoft YaHei';color:#8ec5ff;margin:0 0 22px}
+      h2{font:600 17px Arial,'Microsoft YaHei';color:#9bd2ff;margin:22px 0 8px}
+      pre{margin:0;padding:14px 16px;background:#172338;border:1px solid #304866;border-radius:4px;line-height:1.45;white-space:pre-wrap}
+    </style></head><body><main><h1>任务 01 修复代码证据</h1><h2>gets.py:105-125</h2><pre> 105      state = login_failures.setdefault(key, {&quot;count&quot;: 0, &quot;locked_until&quot;: 0})
+ 106      if state[&quot;locked_until&quot;] and state[&quot;locked_until&quot;] &lt;= time.time():
+ 107          state[&quot;count&quot;] = 0
+ 108          state[&quot;locked_until&quot;] = 0
+ 109      state[&quot;count&quot;] += 1
+ 110      if state[&quot;count&quot;] &gt;= LOGIN_MAX_FAILURES:
+ 111          state[&quot;locked_until&quot;] = time.time() + LOGIN_LOCK_SECONDS
+ 112      security_logger.warning(&quot;login_failed username=%s ip=%s reason=%s count=%s&quot;, username, client_ip(), reason, state[&quot;count&quot;])
+ 113  
+ 114  
+ 115  def login_locked(username):
+ 116      state = login_failures.get(login_key(username))
+ 117      return bool(state and state[&quot;locked_until&quot;] &gt; time.time())
+ 118  
+ 119  
+ 120  def clear_login_failures(username):
+ 121      login_failures.pop(login_key(username), None)
+ 122  
+ 123  
+ 124  def get_db_connection():
+ 125      return pymysql.connect(**db_config)</pre><h2>gets.py:163-215</h2><pre> 163  def login_page():
+ 164      csrf_token()
+ 165      return render_template(&quot;login.html&quot;)
+ 166  
+ 167  
+ 168  @app.post(&quot;/login&quot;)
+ 169  @csrf_protected
+ 170  def login_post():
+ 171      username = request.form.get(&quot;username&quot;, &quot;&quot;).strip()
+ 172      password = request.form.get(&quot;password&quot;, &quot;&quot;)
+ 173      result = _login(username, password, as_api=False)
+ 174      if isinstance(result, tuple) and len(result) == 2 and isinstance(result[1], int) and result[1] &gt;= 400:
+ 175          return render_template(&quot;login.html&quot;, error=result[0], username=username), result[1]
+ 176      return result
+ 177  
+ 178  
+ 179  def _login(username, password, as_api=True):
+ 180      if not username or not password:
+ 181          response = {&quot;error&quot;: &quot;请输入用户名和密码&quot;}
+ 182          return (jsonify(response), 400) if as_api else (&quot;请输入用户名和密码&quot;, 400)
+ 183      if login_locked(username):
+ 184          response = {&quot;error&quot;: &quot;用户名或密码错误&quot;}
+ 185          return (jsonify(response), 401) if as_api else (&quot;用户名或密码错误&quot;, 401)
+ 186      conn = get_db_connection()
+ 187      try:
+ 188          with conn.cursor() as cursor:
+ 189              cursor.execute(&quot;SELECT username, password FROM users WHERE username=%s&quot;, (username,))
+ 190              user = cursor.fetchone()
+ 191      finally:
+ 192          conn.close()
+ 193      valid = bool(user) and (
+ 194          check_password_hash(user[1], password)
+ 195          if user and user[1].startswith((&quot;pbkdf2:&quot;, &quot;scrypt:&quot;))
+ 196          else bool(user) and user[1] == password
+ 197      )
+ 198      if not valid:
+ 199          record_login_failure(username)
+ 200          response = {&quot;error&quot;: &quot;用户名或密码错误&quot;}
+ 201          return (jsonify(response), 401) if as_api else (&quot;用户名或密码错误&quot;, 401)
+ 202      clear_login_failures(username)
+ 203      session.clear()
+ 204      csrf_token()
+ 205      session[&quot;username&quot;] = username
+ 206      if user and not user[1].startswith((&quot;pbkdf2:&quot;, &quot;scrypt:&quot;)):
+ 207          conn = get_db_connection()
+ 208          try:
+ 209              with conn.cursor() as cursor:
+ 210                  cursor.execute(&quot;UPDATE users SET password=%s WHERE username=%s&quot;, (generate_password_hash(password), username))
+ 211              conn.commit()
+ 212          finally:
+ 213              conn.close()
+ 214      security_logger.info(&quot;login_success username=%s ip=%s&quot;, username, client_ip())
+ 215      if as_api:</pre><h2>gets.py:267-302</h2><pre> 267  @csrf_protected
+ 268  def register_post():
+ 269      data = request.form
+ 270      result = _register(data.get(&quot;username&quot;, &quot;&quot;).strip(), data.get(&quot;password&quot;, &quot;&quot;), data.get(&quot;confirm_password&quot;, &quot;&quot;))
+ 271      if result[1] != 200:
+ 272          payload = result[0].get_json(silent=True) if hasattr(result[0], &quot;get_json&quot;) else {}
+ 273          return render_template(&quot;register.html&quot;, error=(payload or {}).get(&quot;error&quot;, &quot;注册失败&quot;), username=data.get(&quot;username&quot;, &quot;&quot;)), result[1]
+ 274      return redirect(&quot;/&quot;)
+ 275  
+ 276  
+ 277  def _register(username, password, confirm_password):
+ 278      if not username or not password:
+ 279          return jsonify({&quot;error&quot;: &quot;用户名和密码不能为空&quot;}), 400
+ 280      if password != confirm_password:
+ 281          return jsonify({&quot;error&quot;: &quot;两次密码不一致&quot;}), 400
+ 282      policy_error = password_error(username, password)
+ 283      if policy_error:
+ 284          return jsonify({&quot;error&quot;: policy_error}), 400
+ 285      conn = get_db_connection()
+ 286      try:
+ 287          with conn.cursor() as cursor:
+ 288              cursor.execute(&quot;SELECT 1 FROM users WHERE username=%s&quot;, (username,))
+ 289              if cursor.fetchone():
+ 290                  return jsonify({&quot;error&quot;: &quot;用户名已存在&quot;}), 409
+ 291              cursor.execute(
+ 292                  &quot;INSERT INTO users(username, password) VALUES(%s, %s)&quot;,
+ 293                  (username, generate_password_hash(password)),
+ 294              )
+ 295          conn.commit()
+ 296      finally:
+ 297          conn.close()
+ 298      return jsonify({&quot;success&quot;: True}), 200
+ 299  
+ 300  
+ 301  @app.post(&quot;/api/register&quot;)
+ 302  @csrf_protected</pre></main></body></html>

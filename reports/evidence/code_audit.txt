@@ -1,0 +1,9 @@
+阶段二代码审计证据
+测试时间：2026-08-30
+项目：Flask 网盘（gets.py）
+
+SQL：cursor.execute 使用 %s 参数绑定；未发现用户输入拼接 SQL。
+XSS/SSTI：模板使用 render_template；未发现 render_template_string；文件下载链接已使用 urlencode。
+命令执行：未发现 os.system、os.popen、subprocess、shell=True。
+访问控制：profile/listfiles/upload/download/delete 均检查 session；文件路径使用 secure_filename 并绑定 session 用户目录。
+额外风险：部署时必须设置 FLASK_SECRET_KEY；FLASK_DEBUG 默认关闭；HTTPS 部署时设置 FLASK_COOKIE_SECURE=1。

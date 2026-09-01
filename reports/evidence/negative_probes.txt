@@ -1,0 +1,7 @@
+阶段二无害负向探测证据
+测试时间：2026-08-30
+
+SQLi 登录绕过：username/password=`' OR '1'='1`，HTTP 401，无登录跳转。
+XSS 文件名探测：`<script>alert(1)</script>` 未登录请求 HTTP 401，响应未反射脚本。
+SSTI 探测：向 `/`、`/login`、`/register` 添加 `name={{7*7}}`，页面均未出现计算结果 `49`。
+以上探测均未执行破坏性 SQL、脚本、命令或远程操作。

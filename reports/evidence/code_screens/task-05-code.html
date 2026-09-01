@@ -1,0 +1,70 @@
+<!doctype html><html><head><meta charset='utf-8'><style>
+      body{margin:0;background:#101827;color:#e5edf8;font:16px Consolas,'Microsoft YaHei',monospace}
+      main{padding:28px 34px} h1{font:700 24px Arial,'Microsoft YaHei';color:#8ec5ff;margin:0 0 22px}
+      h2{font:600 17px Arial,'Microsoft YaHei';color:#9bd2ff;margin:22px 0 8px}
+      pre{margin:0;padding:14px 16px;background:#172338;border:1px solid #304866;border-radius:4px;line-height:1.45;white-space:pre-wrap}
+    </style></head><body><main><h1>任务 05 修复代码证据</h1><h2>gets.py:346-410</h2><pre> 346  
+ 347  @app.post(&quot;/api/files&quot;)
+ 348  @api_login_required
+ 349  @csrf_protected
+ 350  def api_upload_file():
+ 351      return _save_upload(request.files.get(&quot;file&quot;), request.form.get(&quot;customName&quot;, &quot;&quot;))
+ 352  
+ 353  
+ 354  @app.get(&quot;/listfiles&quot;)
+ 355  def list_files():
+ 356      if &quot;username&quot; not in session:
+ 357          return redirect(&quot;/login&quot;)
+ 358      return render_template(&quot;filelist.html&quot;, username=session[&quot;username&quot;], files=[item[&quot;name&quot;] for item in current_user_files()])
+ 359  
+ 360  
+ 361  @app.get(&quot;/api/files&quot;)
+ 362  @api_login_required
+ 363  def api_list_files():
+ 364      return jsonify({&quot;files&quot;: current_user_files()})
+ 365  
+ 366  
+ 367  def safe_user_file(filename):
+ 368      filename = secure_filename(filename or &quot;&quot;)
+ 369      if not filename:
+ 370          abort(400, description=&quot;文件名无效&quot;)
+ 371      user_dir = os.path.join(app.config[&quot;UPLOAD_FOLDER&quot;], session[&quot;username&quot;])
+ 372      path = os.path.join(user_dir, filename)
+ 373      if not os.path.isfile(path):
+ 374          abort(404, description=&quot;文件不存在&quot;)
+ 375      return user_dir, filename
+ 376  
+ 377  
+ 378  @app.get(&quot;/download&quot;)
+ 379  def download_file():
+ 380      if &quot;username&quot; not in session:
+ 381          return &quot;未登录&quot;, 401
+ 382      user_dir, filename = safe_user_file(request.args.get(&quot;filename&quot;))
+ 383      return send_from_directory(user_dir, filename, as_attachment=True)
+ 384  
+ 385  
+ 386  @app.get(&quot;/api/files/&lt;path:filename&gt;/download&quot;)
+ 387  @api_login_required
+ 388  def api_download_file(filename):
+ 389      user_dir, filename = safe_user_file(filename)
+ 390      return send_from_directory(user_dir, filename, as_attachment=True)
+ 391  
+ 392  
+ 393  @app.route(&quot;/delete&quot;, methods=[&quot;GET&quot;, &quot;DELETE&quot;])
+ 394  def delete_file():
+ 395      if &quot;username&quot; not in session:
+ 396          return &quot;未登录&quot;, 401
+ 397      supplied = request.args.get(&quot;csrf_token&quot;) or request.headers.get(&quot;X-CSRF-Token&quot;)
+ 398      if not supplied or not secrets.compare_digest(supplied, session.get(&quot;csrf_token&quot;, &quot;&quot;)):
+ 399          return jsonify({&quot;error&quot;: &quot;请求验证失败，请刷新页面后重试&quot;}), 403
+ 400      user_dir, filename = safe_user_file(request.args.get(&quot;filename&quot;))
+ 401      os.remove(os.path.join(user_dir, filename))
+ 402      return redirect(&quot;/listfiles&quot;) if request.method == &quot;GET&quot; else jsonify({&quot;success&quot;: True})
+ 403  
+ 404  
+ 405  @app.delete(&quot;/api/files/&lt;path:filename&gt;&quot;)
+ 406  @api_login_required
+ 407  @csrf_protected
+ 408  def api_delete_file(filename):
+ 409      user_dir, filename = safe_user_file(filename)
+ 410      os.remove(os.path.join(user_dir, filename))</pre></main></body></html>
